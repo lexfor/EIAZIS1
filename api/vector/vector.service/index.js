@@ -12,8 +12,22 @@ export default class VectorService {
     }
 
     async findBookID(bookWord) {
-        const result = await this.vectorRepository.getBook(bookWord);
+        const result = await this.vectorRepository.findBook(bookWord);
         return result;
+    }
+
+    async findWordsCount(word, bookID) {
+        const result = await this.vectorRepository.findWordsWithBooks(word, bookID);
+        return result;
+    }
+
+    async findWordIndex(word) {
+        const result = await this.vectorRepository.getWordIndex(word);
+        return result;
+    }
+
+    calculate(index, count) {
+        return index / count;
     }
 
     async findWordCounts(content) {

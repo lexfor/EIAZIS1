@@ -32,12 +32,38 @@ export default class VectorRepository {
         }
     }
 
+    async getWordIndex(bookWord) {
+        try {
+            const queryAsync = promisify(this.connection.query).bind(this.connection);
+            const sql = `SELECT index FROM vectors WHERE
+                    word = ?`;
+            const result = await queryAsync(sql, bookWord);
+            return result;
+        } catch (e) {
+            return e.message;
+        }
+    }
+
     async findAllBooksWithWord(word) {
         try {
             const queryAsync = promisify(this.connection.query).bind(this.connection);
             const sql = `SELECT COUNT( DISTINCT document_id ) FROM vectors WHERE
                 word = ?`;
             const result = await queryAsync(sql, word);
+            return result;
+        } catch (e) {
+            return e.message;
+        }
+    }
+
+    async findWordsWithBooks(bookWord, bookID) {
+        try {
+            const data = [bookWord, bookID]
+            const queryAsync = promisify(this.connection.query).bind(this.connection);
+            const sql = `SELECT COUNT( DISTINCT id ) FROM vectors WHERE
+                book_id = $2 AND
+                word = $1`;
+            const result = await queryAsync(sql, data);
             return result;
         } catch (e) {
             return e.message;

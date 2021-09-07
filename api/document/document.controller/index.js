@@ -20,8 +20,17 @@ export default class DocumentController {
     }
 
     async getBook(word) {
-        const bookID = await this.vectorService.findBook(word);
+        const bookID = await this.vectorService.findBookID(word);
+        const wordCount = await this.vectorService.findWordsCount(word, bookID);
+        const wordIndex = await this.vectorService.findWordIndex(word);
+        const indexCoef = this.vectorService.calculate(wordIndex, wordCount);
         const book = await this.documentService.getBook(bookID);
-        return book;
+        return {
+            name: book.name,
+            title: book.title,
+            date: book.date,
+            content: book.content,
+            coef: indexCoef,
+        };
     }
 }
