@@ -1,0 +1,27 @@
+{
+url: '/library/document',
+method: 'POST',
+body: {
+        name: string,
+        content: string,
+        title: string
+    }
+}
+
+{
+url: 'library/document',
+method: 'GET',
+URLSearchParams: word: string
+response: {
+        documentName: string
+        documentTitle: string
+        documentCreatedDate: string
+        wordIndex: string
+    }
+}
+
+{
+url: '/library',
+response: library.html
+}
+

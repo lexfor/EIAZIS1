@@ -1,0 +1,8 @@
+.idea
+.idea/*.*
+/node_modules
+.eslintrc.*
+package-lock.*
+webpack.config.js
+dump.rdb
+.env
