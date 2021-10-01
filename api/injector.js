@@ -8,7 +8,6 @@ import { connection } from "./helpers/DBConnection";
 
 class Injector {
     constructor() {
-        initializeDB(connection);
         this.documentRepository = new DocumentRepository(connection);
         this.vectorRepository = new VectorRepository(connection);
         this.documentService = new DocumentService(this.documentRepository);

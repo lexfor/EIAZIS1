@@ -23,11 +23,11 @@ const envConfig = config[env];
 export { envConfig };
 
 const DB_ACCESS = {
-    host: process.env.STORAGE_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    host: 'localhost',
+    user: 'root',
+    password: '12042001',
     port: 3306,
-    database: process.env.DB_DATABASE,
+    database: 'eiazis1',
     dialect: 'mysql',
 };
 

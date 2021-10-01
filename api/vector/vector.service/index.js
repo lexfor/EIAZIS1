@@ -5,14 +5,17 @@ export default class VectorService {
 
     async addWordToVector(indexes, bookID) {
         const iterator = indexes.entries();
+
         for(let i = 0; i < indexes.size; i += 1) {
             const value = iterator.next().value;
-            this.vectorRepository.add(value[0], +value[1], bookID)
+            const res = await this.vectorRepository.add(value[0], +value[1], bookID);
+            console.log('add word: ', res);
         }
     }
 
     async findBookID(bookWord) {
         const result = await this.vectorRepository.findBook(bookWord);
+        console.log("book id vector service", result);
         return result;
     }
 
@@ -27,7 +30,12 @@ export default class VectorService {
     }
 
     calculate(index, count) {
-        return index / count;
+        if (index.length){
+            console.log('index: ', index);
+            console.log('calculate index: ', index[0].index_num / count[0].count);
+            return index[0].index_num / count[0].count;
+        }
+        return null;
     }
 
     async findWordCounts(content) {

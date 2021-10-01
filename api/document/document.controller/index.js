@@ -14,13 +14,16 @@ export default class DocumentController {
             return false;
         }
         const createdBook = await this.documentService.addBook(book);
+        console.log('add book: ', createdBook);
         const indexes = await this.vectorService.findWordCounts(book.content);
+        console.log('indexes: ', indexes);
         await this.vectorService.addWordToVector(indexes, createdBook.id);
         return true;
     }
 
     async getBook(word) {
         const bookID = await this.vectorService.findBookID(word);
+        console.log('find book by word: ', bookID);
         const wordCount = await this.vectorService.findWordsCount(word, bookID);
         const wordIndex = await this.vectorService.findWordIndex(word);
         const indexCoef = this.vectorService.calculate(wordIndex, wordCount);

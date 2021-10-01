@@ -13,8 +13,10 @@ export default class DocumentRepository {
             const queryAsync = promisify(this.connection.query).bind(this.connection);
             const sql = 'INSERT INTO documents SET ?';
             await queryAsync(sql, data);
+            console.log('data: ', data);
             return data;
         } catch (e) {
+            console.log('error: ', e);
             return e.message;
         }
     }
@@ -22,11 +24,11 @@ export default class DocumentRepository {
     async get(bookID) {
         try {
             const queryAsync = promisify(this.connection.query).bind(this.connection);
-            const sql = `SELECT * FROM documents
-        WHERE 
-        id = ?`;
+            const sql = `SELECT * FROM documents WHERE id = ?`;
             const result = await queryAsync(sql, bookID);
+            console.log('get book: ', result);
             return result[0];
+
         } catch (e) {
             return e.message;
         }

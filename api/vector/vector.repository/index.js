@@ -9,10 +9,11 @@ export default class VectorRepository {
     async add(bookWord, wordIndex, documentID) {
         try {
             const uuid = uuidv1();
-            const data = { id: uuid, word: bookWord, index: wordIndex, document_id: documentID };
+            const data = { id: uuid, word: bookWord, index_num: wordIndex, document_id: documentID };
             const queryAsync = promisify(this.connection.query).bind(this.connection);
-            const sql = 'INSERT INTO vectors SET ?';
+            const sql = 'INSERT INTO words SET ?';
             await queryAsync(sql, data);
+
             return data;
         } catch (e) {
             return e.message;
@@ -22,10 +23,11 @@ export default class VectorRepository {
     async findBook(bookWord) {
         try {
             const queryAsync = promisify(this.connection.query).bind(this.connection);
-            const sql = `SELECT document_id FROM vectors WHERE
-                    word = ? AND 
-                    index = (SELECT MAX(index) FROM vectors)`;
-            const result = await queryAsync(sql, bookWord);
+            console.log('bookWord: ', bookWord);
+            const sql = `SELECT document_id FROM words WHERE
+                    word = ?`;
+            const result = await queryAsync(sql, bookWord.word);
+
             return result;
         } catch (e) {
             return e.message;
@@ -35,9 +37,11 @@ export default class VectorRepository {
     async getWordIndex(bookWord) {
         try {
             const queryAsync = promisify(this.connection.query).bind(this.connection);
-            const sql = `SELECT index FROM vectors WHERE
+            const sql = `SELECT index_num FROM words WHERE
                     word = ?`;
-            const result = await queryAsync(sql, bookWord);
+            const result = await queryAsync(sql, bookWord.word);
+            console.log('find word index: ', result);
+
             return result;
         } catch (e) {
             return e.message;
@@ -47,7 +51,7 @@ export default class VectorRepository {
     async findAllBooksWithWord(word) {
         try {
             const queryAsync = promisify(this.connection.query).bind(this.connection);
-            const sql = `SELECT COUNT( DISTINCT document_id ) FROM vectors WHERE
+            const sql = `SELECT COUNT( DISTINCT document_id ) FROM words WHERE
                 word = ?`;
             const result = await queryAsync(sql, word);
             return result;
@@ -58,12 +62,13 @@ export default class VectorRepository {
 
     async findWordsWithBooks(bookWord, bookID) {
         try {
-            const data = [bookWord, bookID]
+
             const queryAsync = promisify(this.connection.query).bind(this.connection);
-            const sql = `SELECT COUNT( DISTINCT id ) FROM vectors WHERE
-                book_id = $2 AND
-                word = $1`;
-            const result = await queryAsync(sql, data);
+            const sql = `SELECT COUNT( DISTINCT id ) as count FROM words WHERE
+                document_id = \"${bookID[0].document_id}\" AND
+                word = \"${bookWord.word}\"`;
+            const result = await queryAsync(sql);
+            console.log('find words with books: ', result);
             return result;
         } catch (e) {
             return e.message;
