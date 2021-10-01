@@ -5,9 +5,11 @@ import VectorService from "./vector/vector.service";
 import DocumentController from "./document/document.controller";
 
 import { connection } from "./helpers/DBConnection";
+import {initializeDB} from "./helpers/DBInitializator";
 
 class Injector {
     constructor() {
+        initializeDB(connection);
         this.documentRepository = new DocumentRepository(connection);
         this.vectorRepository = new VectorRepository(connection);
         this.documentService = new DocumentService(this.documentRepository);

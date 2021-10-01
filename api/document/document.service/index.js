@@ -10,12 +10,16 @@ export default class DocumentService {
 
     async getBook(bookID) {
         const result = await this.documentRepository.get(bookID);
-        // console.log('book: ', result);
+        return result;
+    }
+
+    async getAllBooks() {
+        const result = await this.documentRepository.getAll();
         return result;
     }
 
     async isExist(book) {
         const books = await this.documentRepository.getAll();
-        return books.indexOf(book.name) !== -1;
+        return books.indexOf(book.name) === -1;
     }
 }

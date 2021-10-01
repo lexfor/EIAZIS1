@@ -6,10 +6,10 @@ export default class VectorRepository {
         this.connection = connection;
     }
 
-    async add(bookWord, wordIndex, documentID) {
+    async add(bookWord, wordIndex, documentID, count) {
         try {
             const uuid = uuidv1();
-            const data = { id: uuid, word: bookWord, index_num: wordIndex, document_id: documentID };
+            const data = { id: uuid, word: bookWord, index_num: wordIndex, document_id: documentID, count: count };
             const queryAsync = promisify(this.connection.query).bind(this.connection);
             const sql = 'INSERT INTO words SET ?';
             await queryAsync(sql, data);
@@ -23,9 +23,8 @@ export default class VectorRepository {
     async findBook(bookWord) {
         try {
             const queryAsync = promisify(this.connection.query).bind(this.connection);
-            console.log('bookWord: ', bookWord);
-            const sql = `SELECT document_id FROM words WHERE
-                    word = ?`;
+            const sql = `SELECT * FROM words WHERE
+                word = ? AND id = (SELECT words.id FROM words WHERE index_num = (SELECT MIN(index_num) FROM words))`;
             const result = await queryAsync(sql, bookWord.word);
 
             return result;
@@ -40,7 +39,6 @@ export default class VectorRepository {
             const sql = `SELECT index_num FROM words WHERE
                     word = ?`;
             const result = await queryAsync(sql, bookWord.word);
-            console.log('find word index: ', result);
 
             return result;
         } catch (e) {
@@ -51,9 +49,53 @@ export default class VectorRepository {
     async findAllBooksWithWord(word) {
         try {
             const queryAsync = promisify(this.connection.query).bind(this.connection);
-            const sql = `SELECT COUNT( DISTINCT document_id ) FROM words WHERE
+            const sql = `SELECT COUNT( DISTINCT document_id ) as count FROM words WHERE
                 word = ?`;
-            const result = await queryAsync(sql, word);
+            const [result] = await queryAsync(sql, word);
+            return result.count;
+        } catch (e) {
+            return e.message;
+        }
+    }
+
+    async findBooksCount() {
+        try {
+            const queryAsync = promisify(this.connection.query).bind(this.connection);
+            const sql = `SELECT COUNT( DISTINCT document_id ) as count FROM words`;
+            const [result] = await queryAsync(sql);
+            return result.count;
+        } catch (e) {
+            return e.message;
+        }
+    }
+
+    async findAllBooksIDs() {
+        try {
+            const queryAsync = promisify(this.connection.query).bind(this.connection);
+            const sql = `SELECT DISTINCT (document_id) FROM words`;
+            let result = await queryAsync(sql);
+            result = result.map((item) => item.document_id);
+            return result;
+        } catch (e) {
+            return e.message;
+        }
+    }
+
+    async findAllBookWords(documentID) {
+        try {
+            const queryAsync = promisify(this.connection.query).bind(this.connection);
+            const sql = `SELECT * FROM words WHERE document_id = ?`;
+            const result = await queryAsync(sql, documentID);
+            return result;
+        } catch (e) {
+            return e.message;
+        }
+    }
+    async deleteAllBookWords(documentID) {
+        try {
+            const queryAsync = promisify(this.connection.query).bind(this.connection);
+            const sql = `DELETE FROM words WHERE document_id = ?`;
+            const result = await queryAsync(sql, documentID);
             return result;
         } catch (e) {
             return e.message;
@@ -65,10 +107,9 @@ export default class VectorRepository {
 
             const queryAsync = promisify(this.connection.query).bind(this.connection);
             const sql = `SELECT COUNT( DISTINCT id ) as count FROM words WHERE
-                document_id = \"${bookID[0].document_id}\" AND
-                word = \"${bookWord.word}\"`;
+                document_id = "${bookID.document_id}" AND
+                word = "${bookWord.word}"`;
             const result = await queryAsync(sql);
-            console.log('find words with books: ', result);
             return result;
         } catch (e) {
             return e.message;

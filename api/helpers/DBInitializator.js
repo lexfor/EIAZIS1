@@ -4,7 +4,7 @@ import { vectorDefine } from "./models/vectorDefine";
 
 export async function initializeDB(connection) {
     const queryAsync = promisify(connection.query).bind(connection);
-    await queryAsync('CREATE DATABASE IF NOT EXISTS eiazis1');
+    await queryAsync('CREATE DATABASE IF NOT EXISTS eiazis');
 
     await documentDefine(connection);
     await vectorDefine(connection);

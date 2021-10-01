@@ -24,10 +24,10 @@ export { envConfig };
 
 const DB_ACCESS = {
     host: 'localhost',
-    user: 'root',
-    password: '12042001',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     port: 3306,
-    database: 'eiazis1',
+    database: process.env.DB_DATABASE,
     dialect: 'mysql',
 };
 

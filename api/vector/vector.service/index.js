@@ -3,40 +3,48 @@ export default class VectorService {
         this.vectorRepository = vectorRepository;
     }
 
-    async addWordToVector(indexes, bookID) {
+    async addWordToVector(book) {
+        const words = await this.findWordCounts(book.content);
+        const indexes = await this.indexing(words);
         const iterator = indexes.entries();
 
         for(let i = 0; i < indexes.size; i += 1) {
             const value = iterator.next().value;
-            const res = await this.vectorRepository.add(value[0], +value[1], bookID);
-            console.log('add word: ', res);
+            await this.vectorRepository.add(value[0], value[1], book.id, words.get(value[0]));
         }
+
+        await this.updateOtherBooks(book);
     }
 
     async findBookID(bookWord) {
+        let count = 1;
+        let bookID = {};
         const result = await this.vectorRepository.findBook(bookWord);
-        console.log("book id vector service", result);
-        return result;
-    }
-
-    async findWordsCount(word, bookID) {
-        const result = await this.vectorRepository.findWordsWithBooks(word, bookID);
-        return result;
-    }
-
-    async findWordIndex(word) {
-        const result = await this.vectorRepository.getWordIndex(word);
-        return result;
-    }
-
-    calculate(index, count) {
-        if (index.length){
-            console.log('index: ', index);
-            console.log('calculate index: ', index[0].index_num / count[0].count);
-            return index[0].index_num / count[0].count;
+        for(let i of result){
+            const calculatedCount = this.calculate([i.index_num]);
+            if(calculatedCount < count) {
+                bookID.document_id = i.document_id;
+                bookID.coef = calculatedCount;
+                count = calculatedCount;
+            }
         }
-        return null;
+        return bookID;
     }
+
+    async findBooksCount() {
+        return await this.vectorRepository.findBooksCount();
+    }
+
+    async findAllBooksWithWord(word) {
+        return await this.vectorRepository.findAllBooksWithWord(word);
+    }
+
+    calculate(index) {
+        const result = Math.sqrt(index.reduce((item, summ) => summ += Math.pow(item, 2)));
+        console.log(result);
+        return result;
+    }
+
 
     async findWordCounts(content) {
         let str = content.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
@@ -46,34 +54,80 @@ export default class VectorService {
         words.forEach((item) => {
             let count = counts.get(item);
             if(!count) {
-                counts.set(item, '1');
+                counts.set(item, 1 );
             } else {
-                count = (+count) + 1;
+                count = count + 1;
                 counts.set(item, count);
             }
         });
         return counts;
     }
 
-    async indexing(counts, documentsWithWordCount, documentsCount) {
+    async indexing(counts) {
         const results = new Map();
+        const indexes = new Map();
+        const N = await this.findBooksCount() + 1;
         const iterator = counts.entries();
+
         for(let i = 0; i < counts.size; i += 1) {
             const value = iterator.next().value;
-            results.set(value[0], value[1] * Math.log(documentsWithWordCount / documentsCount));
+            const Nk = await this.findAllBooksWithWord(value[0]) + 1;
+            results.set(value[0], value[1] * Math.log(N / Nk));
         }
+
         const summIterator = results.values();
+
         let summ = 0;
+
         for(let i = 0; i < results.size; i += 1) {
             const value = summIterator.next().value;
-            summ +=  Math.pow(value, 2);
+            summ +=  Math.pow(value[1], 2);
         }
+
         summ = Math.sqrt(summ);
+
         const resultIterator = results.entries();
+
         for(let i = 0; i < results.size; i += 1) {
             const value = resultIterator.next().value;
-            results.set(value[0], value[1] / summ);
+            let res = value[1] / summ;
+            if(res > 1) {
+                indexes.set(value[0], 1);
+            }else {
+                indexes.set(value[0], res);
+            }
         }
+
         return results;
+    }
+
+    async updateOtherBooks(addedBook) {
+        let booksIDs = await this.vectorRepository.findAllBooksIDs();
+        const books = [];
+        for(let bookID of booksIDs){
+            if(bookID === addedBook.id){
+                continue;
+            }
+            books.push(await this.vectorRepository.findAllBookWords(bookID));
+            await this.vectorRepository.deleteAllBookWords(bookID);
+        }
+
+        for(let book of books){
+            const words = new Map();
+            let bookID;
+            book.forEach((word) => {
+                words.set(word.word, word.count);
+                bookID = word.document_id;
+            })
+
+            const indexes = await this.indexing(words);
+
+            const iterator = indexes.entries();
+
+            for(let i = 0; i < indexes.size; i += 1) {
+                const value = iterator.next().value;
+                await this.vectorRepository.add(value[0], value[1], bookID, words.get(value[0]));
+            }
+        }
     }
 }
